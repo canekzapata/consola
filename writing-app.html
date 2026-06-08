@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Escritura Avanzado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .tool-section {
+            margin-bottom: 24px;
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tool-section h3 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .editor-area {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar button {
+            padding: 8px 16px;
+            border: none;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toolbar button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        #editor {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            min-height: 400px;
+            font-size: 16px;
+            line-height: 1.6;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #editor:focus {
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .output-box {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 12px;
+            border-left: 4px solid #667eea;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 12px;
+            color: #667eea;
+            font-style: italic;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .word-count {
+            text-align: right;
+            color: #888;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .api-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .api-selector button {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .api-selector button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .search-result-item {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e0e0e0;
+        }
+
+        .search-result-item:hover {
+            background: #f0f0f0;
+            transform: translateX(4px);
+        }
+
+        .search-result-item strong {
+            color: #667eea;
+            font-size: 13px;
+        }
+
+        .search-result-item p {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .markov-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✍️ Editor de Escritura Avanzado</h1>
+            <p>Procesador de texto + Markov + IA + Web Search</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <!-- Markov Generator -->
+                <div class="tool-section">
+                    <h3>🎲 Generador Markov</h3>
+                    <label>Texto de entrenamiento:</label>
+                    <textarea id="markovInput" placeholder="Pega aquí el texto para entrenar el modelo Markov..."></textarea>
+                    
+                    <div class="markov-controls">
+                        <div>
+                            <label>Frases:</label>
+                            <input type="number" id="markovSentences" value="3" min="1" max="20">
+                        </div>
+                        <div>
+                            <label>Estado:</label>
+                            <input type="number" id="markovState" value="2" min="1" max="5">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="generateMarkov()">Generar Texto</button>
+                    <div id="markovOutput" class="output-box" style="display:none;"></div>
+                </div>
+
+                <!-- AI Integration -->
+                <div class="tool-section">
+                    <h3>🤖 Asistente IA</h3>
+                    
+                    <div class="api-selector">
+                        <button class="active" onclick="selectAPI('claude')">Claude</button>
+                        <button onclick="selectAPI('chatgpt')">ChatGPT</button>
+                    </div>
+
+                    <div id="claudeTab" class="tab-content active">
+                        <label>API Key de Claude (Anthropic):</label>
+                        <input type="password" id="claudeKey" placeholder="sk-ant-...">
+                        <small style="display: block; margin-bottom: 12px; color: #666; font-size: 11px;">
+                            Obtén tu key en: <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>
+                        </small>
+                        <label>Prompt para Claude:</label>
+                        <textarea id="claudePrompt" placeholder="Ej: Resume este texto, mejora el estilo, continúa la historia..."></textarea>
+                        <button class="btn btn-primary" onclick="callClaude()">Consultar Claude</button>
+                    </div>
+
+                    <div id="chatgptTab" class="tab-content">
+                        <label>API Key de OpenAI:</label>
+                        <input type="password" id="openaiKey" placeholder="sk-...">
+                        <label>Prompt para ChatGPT:</label>
+                        <textarea id="chatgptPrompt" placeholder="Ej: Mejora este texto..."></textarea>
+                        <button class="btn btn-primary" onclick="callChatGPT()">Consultar ChatGPT</button>
+                    </div>
+
+                    <div id="aiLoading" class="loading">Consultando IA...</div>
+                    <div id="aiOutput" class="output-box" style="display:none;"></div>
+                </div>
+
+                <!-- Web Search -->
+                <div class="tool-section">
+                    <h3>🌐 Búsqueda Web</h3>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 12px;">
+                        Para buscar en internet, usa Claude o ChatGPT con prompts como:
+                    </p>
+                    <ul style="font-size: 11px; color: #666; margin-left: 20px; margin-bottom: 12px;">
+                        <li>"Busca información sobre..."</li>
+                        <li>"Qué hay de nuevo sobre..."</li>
+                        <li>"Investiga sobre..."</li>
+                    </ul>
+                    <p style="font-size: 11px; color: #999; font-style: italic;">
+                        Las IAs tienen acceso a información actualizada.
+                    </p>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="tool-section">
+                    <h3>⚡ Acciones Rápidas</h3>
+                    <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Copiar Todo</button>
+                    <button class="btn btn-secondary" onclick="pasteFromClipboard()">📌 Pegar</button>
+                    <button class="btn btn-secondary" onclick="clearEditor()">🗑️ Limpiar</button>
+                    <button class="btn btn-secondary" onclick="exportText()">💾 Exportar TXT</button>
+                </div>
+            </div>
+
+            <div class="editor-area">
+                <div class="toolbar">
+                    <button onclick="document.execCommand('bold')"><strong>B</strong></button>
+                    <button onclick="document.execCommand('italic')"><em>I</em></button>
+                    <button onclick="document.execCommand('underline')"><u>U</u></button>
+                    <button onclick="document.execCommand('insertUnorderedList')">• Lista</button>
+                    <button onclick="document.execCommand('insertOrderedList')">1. Lista</button>
+                    <button onclick="document.execCommand('justifyLeft')">⬅️ Izq</button>
+                    <button onclick="document.execCommand('justifyCenter')">⬌ Centro</button>
+                    <button onclick="document.execCommand('justifyRight')">➡️ Der</button>
+                    <button onclick="insertToEditor()">➕ Insertar Resultado</button>
+                </div>
+
+                <div id="editor" contenteditable="true" placeholder="Empieza a escribir aquí...">
+                </div>
+
+                <div class="word-count" id="wordCount">0 palabras | 0 caracteres</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedAPI = 'claude';
+        let lastResult = '';
+
+        // Update word count
+        const editor = document.getElementById('editor');
+        editor.addEventListener('input', updateWordCount);
+
+        function updateWordCount() {
+            const text = editor.innerText;
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const chars = text.length;
+            document.getElementById('wordCount').textContent = `${words} palabras | ${chars} caracteres`;
+        }
+
+        // API Selection
+        function selectAPI(api) {
+            selectedAPI = api;
+            document.querySelectorAll('.api-selector button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(api + 'Tab').classList.add('active');
+        }
+
+        // Markov Generation
+        async function generateMarkov() {
+            const input = document.getElementById('markovInput').value;
+            const sentences = document.getElementById('markovSentences').value;
+            const state = document.getElementById('markovState').value;
+
+            if (!input.trim()) {
+                alert('Por favor, proporciona texto de entrenamiento para el generador Markov');
+                return;
+            }
+
+            try {
+                const response = await fetch('/markov_generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: input,
+                        sentences: parseInt(sentences),
+                        state_size: parseInt(state)
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                lastResult = data.result;
+                const output = document.getElementById('markovOutput');
+                output.style.display = 'block';
+                output.innerHTML = `<p><strong>Texto generado:</strong></p><p>${data.result}</p>`;
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Claude API Call
+        async function callClaude() {
+            const prompt = document.getElementById('claudePrompt').value;
+            const apiKey = document.getElementById('claudeKey').value;
+            const editorText = editor.innerText;
+
+            if (!prompt.trim()) {
+                alert('Por favor, escribe un prompt para Claude');
+                return;
+            }
+
+            const loading = document.getElementById('aiLoading');
+            const output = document.getElementById('aiOutput');
+            
+            loading.classList.add('active');
+            output.style.display = 'none';
+
+            try {
+                const fullPrompt = editorText 
+                    ? `Texto actual del editor:\n\n${editorText}\n\n---\n\nInstrucciones: ${prompt}`
+                    : prompt;
+
+                const response = await fetch('http://localhost:5000/claude_call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: fullPrompt,
+                        api_key: apiKey
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    let errorMsg = data.error;
+                    if (data.info) {
+                        errorMsg += '\n\n' + data.info;
+                    }
+                    if (data.instructions) {
+                        errorMsg += '\n' + data.instructions;
+                    }
+                    alert(errorMsg);
+                    return;
+                }
+
+                lastResult = data.result;
+                output.style.display = 'block';
+                output.innerHTML = `<p><strong>Respuesta de Claude:</strong></p><p>${lastResult.replace(/\n/g, '<br>')}</p>`;
+            } catch (error) {
+                alert('Error al llamar a Claude: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ChatGPT API Call
+        async function callChatGPT() {
+            const apiKey = document.getElementById('openaiKey').value;
+            const prompt = document.getElementById('chatgptPrompt').value;
+            const editorText = editor.innerText;
+
+            if (!apiKey.trim()) {
+                alert('Por favor, ingresa tu API key de OpenAI');
+                return;
+            }
+
+            if (!prompt.trim()) {
+                alert('Por favor, escribe un prompt');
+                return;
+            }
+
+            const loading = document.getElementById('aiLoading');
+            const output = document.getElementById('aiOutput');
+            
+            loading.classList.add('active');
+            output.style.display = 'none';
+
+            try {
+                const fullPrompt = editorText 
+                    ? `Texto actual del editor:\n\n${editorText}\n\n---\n\nInstrucciones: ${prompt}`
+                    : prompt;
+
+                const response = await fetch('http://localhost:5000/chatgpt_call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: fullPrompt,
+                        api_key: apiKey
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    let errorMsg = data.error;
+                    if (data.info) {
+                        errorMsg += '\n\n' + data.info;
+                    }
+                    alert(errorMsg);
+                    return;
+                }
+
+                lastResult = data.result;
+                output.style.display = 'block';
+                output.innerHTML = `<p><strong>Respuesta de ChatGPT:</strong></p><p>${lastResult.replace(/\n/g, '<br>')}</p>`;
+            } catch (error) {
+                alert('Error al llamar a ChatGPT: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Insert result into editor
+        function insertToEditor() {
+            if (!lastResult) {
+                alert('No hay ningún resultado para insertar');
+                return;
+            }
+
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                
+                const textNode = document.createTextNode('\n\n' + lastResult + '\n\n');
+                range.insertNode(textNode);
+                
+                // Move cursor to end of inserted text
+                range.setStartAfter(textNode);
+                range.setEndAfter(textNode);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } else {
+                editor.innerHTML += '\n\n' + lastResult + '\n\n';
+            }
+            
+            updateWordCount();
+        }
+
+        // Clipboard operations
+        async function copyToClipboard() {
+            const text = editor.innerText;
+            try {
+                await navigator.clipboard.writeText(text);
+                alert('✓ Texto copiado al portapapeles');
+            } catch (error) {
+                alert('Error al copiar: ' + error.message);
+            }
+        }
+
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.execCommand('insertText', false, text);
+                updateWordCount();
+            } catch (error) {
+                alert('Error al pegar: ' + error.message);
+            }
+        }
+
+        // Clear editor
+        function clearEditor() {
+            if (confirm('¿Estás seguro de que quieres limpiar todo el contenido?')) {
+                editor.innerHTML = '';
+                updateWordCount();
+            }
+        }
+
+        // Export as TXT
+        function exportText() {
+            const text = editor.innerText;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'documento_' + new Date().getTime() + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
