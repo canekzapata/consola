@@ -1,0 +1,4 @@
+Flask>=3.0
+Werkzeug>=3.0
+markovify>=0.9
+requests>=2.31
