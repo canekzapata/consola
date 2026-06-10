@@ -1,2 +1,0 @@
-# consola
-consola de escritura
